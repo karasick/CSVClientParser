@@ -1,0 +1,1 @@
+export const DOUBLE_VERTICAL_BAR_DELIMITER = "||"

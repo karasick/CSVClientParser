@@ -1,0 +1,35 @@
+{
+  "name": "csvparsertest",
+  "version": "1.0.0",
+  "description": "CSVParserTest",
+  "main": "index.js",
+  "bin": {
+    "client-parser": "./build/cli.js"
+  },
+  "scripts": {
+    "test": "npx jest",
+    "build": "npx tsc",
+    "package": "pkg . --targets node14-win-x64 --output ./packages/client-parser"
+  },
+  "keywords": [],
+  "author": "karasick",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/adm-zip": "^0.4.34",
+    "@types/jest": "^27.4.0",
+    "@types/node": "^17.0.14",
+    "@types/yargs": "^17.0.8",
+    "jest": "^27.4.7",
+    "pkg": "^5.5.2",
+    "ts-jest": "^27.1.3",
+    "typescript": "^4.5.5"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.9",
+    "csv-parser": "^3.0.0",
+    "yargs": "^17.3.1"
+  },
+  "pkg": {
+    "scripts": "build/**/*.js"
+  }
+}
