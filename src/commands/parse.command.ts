@@ -43,7 +43,7 @@ export const handler = async (argv: Arguments<Options>): Promise<void> => {
         )
         .subscribe( async (clients) => {
             await clientService.saveClients(clients, jsonPath)
-            console.log("Json file is successfully stored on path: " + jsonPath)
+            console.log(`Json file is successfully stored on path: ${jsonPath}`)
 
             process.exit(0)
         })
