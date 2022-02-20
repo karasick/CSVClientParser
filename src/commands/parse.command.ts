@@ -1,22 +1,25 @@
-import type { Arguments, CommandBuilder } from 'yargs';
-import {ZipParser} from "../zip-parser/zip-parser";
-import {clientService} from "../services/client.service";
-import {ClientDto} from "../dtos/client.dto";
-import path from "path";
+import type { Arguments, CommandBuilder } from 'yargs'
+import { clientService } from '../services/client.service'
+import { resolve } from 'path'
+import { readFile } from 'fs/promises'
+import { loadAsync } from 'jszip'
+import EventEmitter from 'eventemitter3'
+import { fromEvent, bufferCount, map } from 'rxjs'
+import { ClientDto } from '../dtos/client.dto'
 
 type Options = {
-    inputName: string;
+    inputName: string
     outputName: string
-};
+}
 
-export const command: string = 'parse <inputName> [--outputName=<outputName>]';
-export const desc: string = 'Parse zip archive <inputName> with csv files to json file <outputName>';
+export const command: string = 'parse <inputName> [--outputName=<outputName>]'
+export const desc: string = 'Parse zip archive <inputName> with csv files to json file <outputName>'
 
 export const builder: CommandBuilder<Options, Options> = (yargs) =>
     yargs
         .options({
             outputName: {
-                alias: "o",
+                alias: 'o',
                 type: 'string',
                 default: 'result.json'
             },
@@ -24,30 +27,33 @@ export const builder: CommandBuilder<Options, Options> = (yargs) =>
         .positional('inputName', { type: 'string', demandOption: true })
 
 export const handler = async (argv: Arguments<Options>): Promise<void> => {
-    const { inputName, outputName } = argv;
-    const processFolder = process.cwd()
+    const { inputName, outputName } = argv
+    const processRoot = process.cwd()
+    const hub = new EventEmitter
 
-    const zipPath = path.join(processFolder, String(inputName));
-    const zip = new ZipParser(zipPath)
+    const zipPath = resolve(processRoot, String(inputName));
+    const jsonPath = resolve(processRoot, String(outputName));
 
-    const zipEntries = zip.getZipEntries()
+    const receiveEventName = 'receive'
+    const $receive = fromEvent<ClientDto[]>(hub, receiveEventName)
+    $receive
+        .pipe(
+            bufferCount(2),
+            map(([firstArr, secondArr]) => firstArr.concat(secondArr))
+        )
+        .subscribe( async (clients) => {
+            await clientService.saveClients(clients, jsonPath)
+            console.log("Json file is successfully stored on path: " + jsonPath)
 
-    const zipExtractedPath = path.join(processFolder, '/temp');
-    zip.extractAll(zipExtractedPath)
+            process.exit(0)
+        })
 
-    const clients: ClientDto[] = []
-    for (const zipEntry of zipEntries) {
-        const entryPath = path.join(zipExtractedPath, zipEntry.name);
-        const entryClients = await clientService.getClients(entryPath)
+    const archiveData = await readFile(zipPath);
+    const { files } = await loadAsync(archiveData)
 
-        clients.push(...entryClients)
+    for (const [fileName, csvObject] of Object.entries(files)) {
+        const csvReadStream = csvObject.nodeStream()
+        const csvData = await clientService.getClientsFromStream(csvReadStream)
+        hub.emit(receiveEventName, csvData)
     }
-
-    const jsonPath = path.join(processFolder, String(outputName));
-    await clientService.saveClients(clients, jsonPath)
-
-    zip.clearTemp()
-    process.stdout.write("Json file is successfully stored on path: " + jsonPath);
-
-    process.exit(0);
 };

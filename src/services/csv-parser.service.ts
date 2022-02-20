@@ -1,41 +1,63 @@
-import {DOUBLE_VERTICAL_BAR_DELIMITER} from "./consts";
+import { DOUBLE_VERTICAL_BAR_DELIMITER } from './consts'
+import { createReadStream } from 'fs'
 
 const csvParser = require('csv-parser')
-import * as fs from "fs";
 
 class CsvParserService {
-    async parseData(filePath: string, headers: string[] = []): Promise<any> {
+
+    private csvParserOptions : any = {
+        separator: DOUBLE_VERTICAL_BAR_DELIMITER
+    }
+
+    async parseCsvFile (filePath: string, headers: string[] = []): Promise<any> {
         try {
-            console.log(filePath);
+            console.log(filePath)
 
-            const records: any = [];
+            const records: any = []
 
-            const csvParserOptions : any = {
-                separator: DOUBLE_VERTICAL_BAR_DELIMITER
+            if (headers.length >= 1) {
+                this.csvParserOptions.headers = headers
+                this.csvParserOptions.skipLines = 1
             }
 
-            if(headers.length >= 1) {
-                csvParserOptions.headers = headers
-                csvParserOptions.skipLines = 1
-            }
-
-            await new Promise((resolve, reject) => {
-                fs.createReadStream(filePath)
-                    .pipe(csvParser(csvParserOptions))
+            return new Promise((resolve, reject) => {
+                createReadStream(filePath)
+                    .pipe(csvParser(this.csvParserOptions))
                     .on('data', (data: any) => {
                         records.push(data)
                     })
                     .on('error', reject)
-                    .on('end', resolve);
+                    .on('end', () => {
+                        resolve(records)
+                    });
             })
-
-            // console.log(records)
-            return records
         }
         catch (e) {
             console.error(e)
             throw new Error('File parsing error.')
         }
+    }
+
+    async parseCsvStream (csvSteam: NodeJS.ReadableStream, transform?: (rawData: any) => any): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const records: any = []
+
+            csvSteam
+                .pipe(csvParser(this.csvParserOptions))
+                .on('data', (data: any) => {
+                    if (transform == null) {
+                        records.push(data)
+                        return
+                    }
+
+                    const transformedData = transform(data)
+                    records.push(transformedData)
+                })
+                .on('error', reject)
+                .on('end', () => {
+                    resolve(records)
+                })
+        })
     }
 }
 

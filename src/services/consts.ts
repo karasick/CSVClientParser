@@ -1,1 +1,1 @@
-export const DOUBLE_VERTICAL_BAR_DELIMITER = "||"
+export const DOUBLE_VERTICAL_BAR_DELIMITER = '||'

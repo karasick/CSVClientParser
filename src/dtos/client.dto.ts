@@ -1,4 +1,4 @@
-import {PersonDto} from "./person.dto";
+import { PersonDto } from './person.dto'
 
 export interface ClientDto {
     name: string

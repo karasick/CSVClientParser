@@ -1,5 +1,5 @@
-import yargs from 'yargs';
-import { hideBin } from 'yargs/helpers';
+import yargs from 'yargs'
+import { hideBin } from 'yargs/helpers'
 
 yargs(hideBin(process.argv))
     // Use the commands directory to scaffold.
@@ -8,4 +8,4 @@ yargs(hideBin(process.argv))
     .strict()
     // Useful aliases.
     .alias({ h: 'help' })
-    .argv;
+    .argv
