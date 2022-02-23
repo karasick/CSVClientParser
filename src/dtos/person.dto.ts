@@ -1,4 +1,4 @@
 export interface PersonDto {
-    firstName: string
-    lastName: string
+  firstName: string
+  lastName: string
 }
