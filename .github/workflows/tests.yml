@@ -29,3 +29,9 @@ jobs:
     - run: npm ci
     - run: npm run build --if-present
     - run: npm test
+    - uses: peter-evans/repository-dispatch@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        repository: ${{ github.repository }}
+        event-type: trigger-tests-passed
+        client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}"}'
